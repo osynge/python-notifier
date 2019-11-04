@@ -25,30 +25,37 @@
 import notifier
 import notifier.signals as signals
 
-class TestSignal( signals.Provider ):
-	def __init__( self ):
-		signals.Provider.__init__( self )
-		self.signal_new( 'test-signal' )
+
+class TestSignal(signals.Provider):
+    def __init__(self):
+        signals.Provider.__init__(self)
+        self.signal_new('test-signal')
+
 
 test = TestSignal()
 
-def timer_cb( a ):
-	print 'timer argument', a
-	signals.emit( 'test-signal' )
-	test.signal_emit( 'test-signal' )
-	print '-------------------------'
-	return True
 
-def signal_cb( signal, a, b ):
-	print 'signal arguments', signal, a, b
-	# disconnect global signal
-	signals.disconnect( 'test-signal', signal_cb )
+def timer_cb(a):
+    print('timer argument:%s' % a)
+    signals.emit('test-signal')
+    test.signal_emit('test-signal')
+    print('-------------------------')
+    return True
 
-notifier.init( notifier.GENERIC )
 
-signals.new( 'test-signal' )
-signals.connect( 'test-signal', notifier.Callback( signal_cb, 1, 2, 'global signal' ) )
-test.signal_connect( 'test-signal',notifier.Callback( signal_cb, 1, 2, 'TestSignal signal' ) )
-notifier.timer_add( 2000, notifier.Callback( timer_cb, 7 ) )
+def signal_cb(signal, a, b):
+    print('signal arguments:%s\t&s\t%s', signal, a, b)
+    # disconnect global signal
+    signals.disconnect('test-signal', signal_cb)
+
+
+notifier.init(notifier.GENERIC)
+
+signals.new('test-signal')
+signals.connect(
+    'test-signal', notifier.Callback(signal_cb, 1, 2, 'global signal'))
+test.signal_connect(
+    'test-signal', notifier.Callback(signal_cb, 1, 2, 'TestSignal signal'))
+notifier.timer_add(2000, notifier.Callback(timer_cb, 7))
 
 notifier.loop()

@@ -21,7 +21,16 @@
 # License along with this library; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 # 02110-1301 USA
+from __future__ import absolute_import
 
+import sys
+
+from . import log
+from . import dispatch
+from twisted.internet import task
+from twisted.internet import reactor
+from twisted.internet.interfaces import IReadDescriptor, IWriteDescriptor
+from zope.interface import implements
 """
 This is a notifier implementation using Twisted - http://www.twistedmatrix.com/
 Twisted is an async framework that has much in common with pynotifier and kaa.
@@ -40,20 +49,21 @@ Twisted doc index:
 http://twistedmatrix.com/projects/core/documentation/howto/index.html
 """
 
+
 # Python imports
-from types import IntType
+if sys.version_info < (3,):
+    integer_type = int
+
+else:
+    from types import IntType
+    integer_type = IntType
+
 
 # Twisted uses zope.interface
-from zope.interface import implements
 
 # Twisted imports
-from twisted.internet.interfaces import IReadDescriptor, IWriteDescriptor
-from twisted.internet import reactor
-from twisted.internet import task
 
 # internal packages
-import dispatch
-import log
 
 IO_READ = 1
 IO_WRITE = 2
@@ -87,7 +97,7 @@ class SocketReadCB:
             socket_remove(self.socket, IO_READ)
 
     def fileno(self):
-        if type(self.socket) is IntType:
+        if isinstance(self.socket, integer_type):
             return self.socket
         elif hasattr(self.socket, 'fileno'):
             return self.socket.fileno()
@@ -120,7 +130,7 @@ class SocketWriteCB:
             socket_remove(self.socket, IO_WRITE)
 
     def fileno(self):
-        if type(self.socket) is IntType:
+        if isinstance(self.socket, integer_type):
             return self.socket
         elif hasattr(self.socket, 'fileno'):
             return self.socket.fileno()
@@ -133,7 +143,7 @@ class SocketWriteCB:
         log.error("connection lost on socket fd=%s" % self.fileno())
 
 
-def socket_add(id, method, condition = IO_READ):
+def socket_add(id, method, condition=IO_READ):
     """
     The first argument specifies a socket, the second argument has to be a
     function that is called whenever there is data ready in the socket.
@@ -214,15 +224,16 @@ def timer_remove(id):
 def dispatcher_add(method):
     dispatch.dispatcher_add(method)
 
+
 dispatcher_remove = dispatch.dispatcher_remove
 
 
-def step(sleep = True, external = True):
+def step(sleep=True, external=True):
     if reactor.running:
         try:
             t = sleep and reactor.running and reactor.timeout()
             if dispatch.dispatcher_count():
-                 t = dispatch.MIN_TIMER / 1000.0
+                t = dispatch.MIN_TIMER / 1000.0
             reactor.doIteration(t)
             reactor.runUntilCurrent()
         except:
@@ -265,4 +276,3 @@ def loop():
 
 def _init():
     reactor.startRunning(installSignalHandlers=True)
-

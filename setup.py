@@ -29,9 +29,36 @@ capable of wrapping other notifier implementations of GTK+, Qt and wxWindows.
 This enables library developers to write code that may be used in applications
 with """
 
+import sys
+from setuptools.command.test import test as TestCommand
 from distutils.core import setup
 
-execfile( 'notifier/version.py' )
+#execfile( 'notifier/version.py' )
+exec(open("./notifier/version.py").read())
+
+
+class PyTest(TestCommand):
+    user_options = [('pytest-args=', 'a', "Arguments to pass to py.test")]
+
+    def initialize_options(self):
+        TestCommand.initialize_options(self)
+        self.pytest_args = ""
+
+    def finalize_options(self):
+        TestCommand.finalize_options(self)
+        self.test_args = []
+        self.test_suite = True
+
+    def run_tests(self):
+        try:
+            # import here, because outside the eggs aren't loaded
+            import pytest
+        except ImportError:
+            raise RuntimeError("py.test is not installed, "
+                               "run: pip install pytest")
+        errno = pytest.main([self.pytest_args])
+        sys.exit(errno)
+
 
 classifiers = """\
 Development Status :: 5 - Production/Stable
@@ -45,17 +72,26 @@ Topic :: Software Development :: Libraries :: Python Modules
 Operating System :: Unix
 """
 
-doclines = __doc__.split( '\n' )
-setup( name	= 'python-notifier',
-       version	= VERSION,
-       license  = 'LGPLv2',
-       description = doclines[ 0 ],
-       long_description = '\n'.join( doclines[ 2 : ] ),
-       author	= 'Andreas Büsching',
-       author_email = 'crunchy@bitkipper.net',
-       url	= 'http://blog.bitkipper.net/?page_id=51',
-       download_url = 'http://blog.bitkipper.net/?page_id=51',
-       platforms = [ 'any', ],
-       classifiers = filter( None, classifiers.split( '\n' ) ),
-       packages = [ 'notifier', ],
-     )
+
+doclines = __doc__.split('\n')
+setup_args = {'name'	: 'python-notifier',
+              'version'	: VERSION,
+              'license': 'LGPLv2',
+              'description': doclines[0],
+              'long_description': '\n'.join(doclines[2:]),
+              'author'	: 'Andreas Büsching',
+              'author_email': 'crunchy@bitkipper.net',
+              'url'	: 'http://blog.bitkipper.net/?page_id=51',
+              'download_url': 'http://blog.bitkipper.net/?page_id=51',
+              'platforms': ['any', ],
+              'classifiers': filter(None, classifiers.split('\n')),
+              'packages': ['notifier', ],
+              "cmdclass": {'test': PyTest},
+              'extras_require': {
+                  'test': ['zope', 'twisted', 'pytest'],
+              },
+              }
+
+setup_args['tests_require'] = setup_args.get('install_requires', []).extend(
+    setup_args.get('tests_require', []))
+setup(**setup_args)
