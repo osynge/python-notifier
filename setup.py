@@ -29,9 +29,13 @@ capable of wrapping other notifier implementations of GTK+, Qt and wxWindows.
 This enables library developers to write code that may be used in applications
 with """
 
+import sys
+from setuptools.command.test import test as TestCommand
 from distutils.core import setup
 
-execfile('notifier/version.py')
+#execfile( 'notifier/version.py' )
+exec(open("./notifier/version.py").read())
+
 
 classifiers = """\
 Development Status :: 5 - Production/Stable
@@ -45,17 +49,26 @@ Topic :: Software Development :: Libraries :: Python Modules
 Operating System :: Unix
 """
 
+
 doclines = __doc__.split('\n')
-setup(name='python-notifier',
-	version=VERSION,
-	license='LGPLv2',
-	description=doclines[0],
-	long_description='\n'.join(doclines[2:]),
-	author='Andreas Büsching',
-	author_email='crunchy@bitkipper.net',
-	url='http://blog.bitkipper.net/?page_id=51',
-	download_url='http://blog.bitkipper.net/?page_id=51',
-	platforms=['any', ],
-	classifiers=filter(None, classifiers.split('\n')),
-	packages=['notifier', ],
-	)
+setup_args = {'name'	: 'python-notifier',
+              'version'	: VERSION,
+              'license': 'LGPLv2',
+              'description': doclines[0],
+              'long_description': '\n'.join(doclines[2:]),
+              'author'	: 'Andreas Büsching',
+              'author_email': 'crunchy@bitkipper.net',
+              'url'	: 'http://blog.bitkipper.net/?page_id=51',
+              'download_url': 'http://blog.bitkipper.net/?page_id=51',
+              'platforms': ['any', ],
+              'classifiers': filter(None, classifiers.split('\n')),
+              'packages': ['notifier', ],
+              'extras_require': {
+                  'testing': ['zope', 'twisted', 'pytest'],
+              },
+
+              }
+
+setup_args['tests_require'] = setup_args.get('install_requires', []).extend(
+    setup_args.get('tests_require', []))
+setup(**setup_args)
