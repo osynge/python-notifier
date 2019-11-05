@@ -68,7 +68,8 @@ class Socket(qt.QSocketNotifier):
 
 	@qt.pyqtSlot(int)
 	def notified(self, socket):
-		log.warn('QT: socket: %d event on socket %s' % (self.type(), str(socket)))
+		log.warn('QT: socket: %d event on socket %s' %
+				 (self.type(), str(socket)))
 		if not self.method(self.socket):
 			self.setEnabled(0)
 			socket_remove(self.socket, self.type())
@@ -90,7 +91,7 @@ class Timer(qt.QTimer):
 			if not self.method():
 				self.stop()
 				del self
-		except BaseException, e:
+		except BaseException as e:
 			log.warn('TIMER FAILED: %s' % str(e))
 
 
@@ -99,7 +100,8 @@ def socket_add(socket, method, condition=IO_READ):
 	function that is called whenever there is data ready in the socket."""
 	global _qt_socketIDs
 	if _get_fd(socket) in map(lambda s: _get_fd(s), _qt_socketIDs[condition].keys()):
-		log.warn('Socket %d already registered for condition %d' % (_get_fd(socket), condition))
+		log.warn('Socket %d already registered for condition %d' %
+				 (_get_fd(socket), condition))
 		return
 	_qt_socketIDs[condition][socket] = Socket(socket, method, condition)
 
@@ -160,7 +162,8 @@ def step(sleep=True, external=True):
 		if time.elapsed() < __min_timer:
 			qt.QThread.usleep(__min_timer - time.elapsed())
 	else:
-		qt.QCoreApplication.processEvents(qt.QEventLoop.AllEvents | qt.QEventLoop.WaitForMoreEvents)
+		qt.QCoreApplication.processEvents(
+			qt.QEventLoop.AllEvents | qt.QEventLoop.WaitForMoreEvents)
 
 	if external:
 		dispatch.dispatcher_run()
